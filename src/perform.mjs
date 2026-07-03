@@ -171,6 +171,15 @@ async function doKill() {
 }
 
 async function doRestart() {
+    console.log(chalk.yellowBright(`[restart] Would you like to kill the existing tmux session "${TMUX_SESSION}" and re-initialize? (Y/N): `));
+    const answer = await question("Answer: ", {
+        choices: ["Y", "N"],
+    });
+    console.log(chalk.gray(`[restart] You answered: ${answer}`));
+    if (answer !== "Y") {
+        console.log(chalk.yellowBright(`[restart] Aborting restart.`));
+        return;
+    }
     console.log(chalk.blueBright(`[restart] Restarting tmux session "${TMUX_SESSION}" on ${REMOTE_HOST}...`));
     await doKill();
     // Brief pause to ensure tmux fully cleans up

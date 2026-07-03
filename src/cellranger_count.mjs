@@ -19,7 +19,7 @@ const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const CELLRANGER = `${PROJECT_ROOT}/tools/cellranger-10.0.0/bin/cellranger`;
 const REFERENCE = `${PROJECT_ROOT}/data/RefDB/GENCODE.v46/GRCh38/cellranger/GRCh38`;
 const SRA_DIR = `${PROJECT_ROOT}/data/geo/PRJNA605083`;
-const FASTQ_DIR = `${PROJECT_ROOT}/data/PRJNA605083/fastq`;
+const FASTQ_DIR = `${PROJECT_ROOT}/out/PRJNA605083/fastq`;
 const RESULTS_DIR = `${PROJECT_ROOT}/out/PRJNA605083/cellranger`;
 
 const THREADS = argv.t || 16;
