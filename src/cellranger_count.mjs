@@ -20,7 +20,7 @@ const CELLRANGER = `${PROJECT_ROOT}/tools/cellranger-10.0.0/bin/cellranger`;
 const REFERENCE = `${PROJECT_ROOT}/data/RefDB/GENCODE.v46/GRCh38/cellranger/GRCh38`;
 const SRA_DIR = `${PROJECT_ROOT}/data/geo/PRJNA605083`;
 const FASTQ_DIR = `${PROJECT_ROOT}/data/PRJNA605083/fastq`;
-const RESULTS_DIR = `${PROJECT_ROOT}/data/PRJNA605083/cellranger_results`;
+const RESULTS_DIR = `${PROJECT_ROOT}/out/PRJNA605083/cellranger`;
 
 const THREADS = argv.t || 16;
 const MEM_GB = argv.m || 64;
@@ -117,7 +117,7 @@ async function sraToFastq(sample, currentIndex) {
     fastqProc.pipe.stdout(logStream);
     fastqProc.pipe.stderr(logStream);
 
-    await fastqProc;
+    fastqProc = await fastqProc;
     logStream.end();
     await new Promise(resolve => logStream.on("close", resolve));
 
@@ -199,7 +199,7 @@ for (const sample of SAMPLES) {
     crProc.pipe.stdout(logStream);
     crProc.pipe.stderr(logStream);
 
-    await crProc;
+    crProc = await crProc;
     logStream.end();
     await new Promise(resolve => logStream.on("close", resolve));
 
