@@ -24,7 +24,7 @@ const RESULTS_DIR = `${PROJECT_ROOT}/data/PRJNA605083/cellranger_results`;
 
 const THREADS = argv.t || 16;
 const MEM_GB = argv.m || 64;
-const PARALLEL_FASTQ = argv.parallelFastq || 2; // max parallel SRA→FASTQ conversions
+const PARALLEL_FASTQ = argv.parallelFastq || 1; // max parallel SRA→FASTQ conversions
 
 // # ============================================================================
 // # Read sample metadata from JSON (source of truth)
