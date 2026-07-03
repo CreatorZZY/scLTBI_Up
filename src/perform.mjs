@@ -1,7 +1,6 @@
 #!/bin/env zx
 import fs from 'fs';
 import path from 'path';
-import { argv } from 'process';
 import { fileURLToPath } from 'url';
 
 // # ============================================================================
@@ -9,6 +8,7 @@ import { fileURLToPath } from 'url';
 // #
 // # Usage:
 // #   zx src/perform.mjs --init              # setup tmux session + sdsb on ln202
+// #   zx src/perform.mjs --restart           # kill existing session + re-init
 // #   zx src/perform.mjs <command...>        # run command in ln202 tmux session
 // #   zx src/perform.mjs --sync <command...> # run & wait for completion (polling)
 // #   zx src/perform.mjs --status            # check tmux session status
@@ -39,12 +39,13 @@ const SETUP_TIMEOUT_MS = 120_000;     // 2 min for sdsb SLURM allocation
 const hasArgv = typeof argv !== 'undefined' && argv && typeof argv._ === 'object';
 
 const isInit = hasArgv ? (argv.init || argv.i || false) : process.argv.includes('--init');
+const isRestart = hasArgv ? (argv.restart || argv.r || false) : (process.argv.includes('--restart') || process.argv.includes('-r'));
 const isSync = hasArgv ? (argv.sync || argv.s || false) : process.argv.includes('--sync');
 const isStatus = hasArgv ? (argv.status || false) : process.argv.includes('--status');
 
 const positional = hasArgv
     ? argv._
-    : process.argv.slice(3).filter(a => !a.startsWith('--'));
+    : process.argv.slice(3).filter(a => !a.startsWith('--') && !a.startsWith('-'));
 const remoteCmd = positional.join(' ');
 
 // # ============================================================================
@@ -155,6 +156,29 @@ async function doInit() {
 }
 
 // # ============================================================================
+// # --restart: Kill existing tmux session, then re-init
+// # ============================================================================
+
+async function doKill() {
+    const exists = await tmuxHasSession();
+    if (!exists) {
+        console.log(chalk.yellowBright(`[kill] tmux session "${TMUX_SESSION}" does not exist on ${REMOTE_HOST}.`));
+        return;
+    }
+    console.log(chalk.blueBright(`[kill] Killing tmux session "${TMUX_SESSION}" on ${REMOTE_HOST}...`));
+    await sshCapture(`tmux kill-session -t ${TMUX_SESSION}`);
+    console.log(chalk.greenBright(`[kill] Session killed.`));
+}
+
+async function doRestart() {
+    console.log(chalk.blueBright(`[restart] Restarting tmux session "${TMUX_SESSION}" on ${REMOTE_HOST}...`));
+    await doKill();
+    // Brief pause to ensure tmux fully cleans up
+    await new Promise(r => setTimeout(r, 2000));
+    await doInit();
+}
+
+// # ============================================================================
 // # --status: Check tmux session state
 // # ============================================================================
 
@@ -247,6 +271,8 @@ async function doSync(cmd) {
 (async () => {
     if (isInit) {
         await doInit();
+    } else if (isRestart) {
+        await doRestart();
     } else if (isStatus) {
         await doStatus();
     } else if (isSync) {
@@ -260,6 +286,7 @@ async function doSync(cmd) {
     } else {
         console.log(chalk.blueBright('Usage:'));
         console.log(chalk.gray('  zx src/perform.mjs --init              # Setup tmux + sdsb on ln202'));
+        console.log(chalk.gray('  zx src/perform.mjs --restart           # Kill session + re-init'));
         console.log(chalk.gray('  zx src/perform.mjs --status            # Check session status'));
         console.log(chalk.gray('  zx src/perform.mjs <command...>        # Fire-and-forget command'));
         console.log(chalk.gray('  zx src/perform.mjs --sync <command...> # Run and wait for completion'));
