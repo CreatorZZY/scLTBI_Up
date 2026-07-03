@@ -179,12 +179,11 @@ async function doExec(cmd) {
     console.log(chalk.blueBright(`[exec] Sending to ${REMOTE_HOST} tmux ${TMUX_SESSION}:${TMUX_WINDOW}:`));
     console.log(chalk.cyan(`  ${cmd}`));
 
-    // Verify tmux session exists
+    // Verify tmux session exists, auto-init if not
     const exists = await tmuxHasSession();
     if (!exists) {
-        console.log(chalk.redBright(`[exec] tmux session "${TMUX_SESSION}" not found on ${REMOTE_HOST}.`));
-        console.log(chalk.redBright(`[exec] Run "zx src/perform.mjs --init" first.`));
-        process.exit(1);
+        console.log(chalk.yellowBright(`[exec] tmux session "${TMUX_SESSION}" not found — auto-initializing...`));
+        await doInit();
     }
 
     // Navigate to project root first, then execute command
