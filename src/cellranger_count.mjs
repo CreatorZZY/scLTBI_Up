@@ -53,9 +53,6 @@ const SAMPLES = rawMetadata.map(record => ({
     group: deriveGroup(record["Sample Name"]), // e.g. "TB"
 }));
 
-console.log(SAMPLES);
-process.exit(1);
-
 // Verify all groups recognized
 const unrecognized = SAMPLES.filter(s => s.group === "UNKNOWN");
 if (unrecognized.length > 0) {
@@ -108,10 +105,9 @@ async function sraToFastq(sample, currentIndex) {
     const fastqProc = $({ stdio: ["inherit", "pipe", "pipe"], quiet: true })`micromamba run -n seqds \
         parallel-fastq-dump \
             --sra-id ${sraFile} \
-            --threads ${THREADS} \
-            --outdir ${sampleFastqDir} \
+            -t ${THREADS} \
+            -O ${sampleFastqDir} \
             --split-files \
-            --include-technical \
             --gzip`;
 
     // Pipe logs
@@ -190,9 +186,6 @@ for (const sample of SAMPLES) {
         --transcriptome=${REFERENCE} \
         --fastqs=${fastqDir} \
         --sample=${sample.name} \
-        --chemistry=SC3Pv2 \
-        --expect-cells=10000 \
-        --include-introns=true \
         --create-bam=true \
         --localcores=${THREADS} \
         --localmem=${MEM_GB} \

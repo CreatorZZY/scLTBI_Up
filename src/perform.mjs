@@ -5,13 +5,13 @@ import { argv } from 'process';
 import { fileURLToPath } from 'url';
 
 // # ============================================================================
-// # perform.mjs — Remote launcher for ln202 + sdsb container
+// # src/perform.mjs — Remote launcher for ln202 + sdsb container
 // #
 // # Usage:
-// #   zx perform.mjs --init              # setup tmux session + sdsb on ln202
-// #   zx perform.mjs <command...>        # run command in ln202 tmux session
-// #   zx perform.mjs --sync <command...> # run & wait for completion (polling)
-// #   zx perform.mjs --status            # check tmux session status
+// #   zx src/perform.mjs --init              # setup tmux session + sdsb on ln202
+// #   zx src/perform.mjs <command...>        # run command in ln202 tmux session
+// #   zx src/perform.mjs --sync <command...> # run & wait for completion (polling)
+// #   zx src/perform.mjs --status            # check tmux session status
 // # ============================================================================
 
 process.env.FORCE_COLOR = '3';
@@ -32,13 +32,20 @@ const POLL_INTERVAL_MS = 5000;        // check completion every 5s
 const SETUP_TIMEOUT_MS = 120_000;     // 2 min for sdsb SLURM allocation
 
 // # ============================================================================
-// # Parse args (zx's built-in argv is minimist-parsed)
+// # Parse args — zx's global `argv` is minimist-parsed in v7+
+// # If unavailable (older zx), fall back to process.argv
 // # ============================================================================
 
-const isInit = argv.init || argv.i;
-const isSync = argv.sync || argv.s;
-const isStatus = argv.status;
-const remoteCmd = argv._.join(' ');
+const hasArgv = typeof argv !== 'undefined' && argv && typeof argv._ === 'object';
+
+const isInit = hasArgv ? (argv.init || argv.i || false) : process.argv.includes('--init');
+const isSync = hasArgv ? (argv.sync || argv.s || false) : process.argv.includes('--sync');
+const isStatus = hasArgv ? (argv.status || false) : process.argv.includes('--status');
+
+const positional = hasArgv
+    ? argv._
+    : process.argv.slice(3).filter(a => !a.startsWith('--'));
+const remoteCmd = positional.join(' ');
 
 // # ============================================================================
 // # Helpers: SSH to ln202
@@ -144,7 +151,7 @@ async function doInit() {
     console.log(chalk.greenBright(`[init] tmux session "${TMUX_SESSION}" is ready on ${REMOTE_HOST}!`));
     console.log(chalk.gray(`[init] Attach:  ssh -t ${REMOTE_HOST} tmux attach -t ${TMUX_SESSION}`));
     console.log(chalk.gray(`[init] Detach:  Ctrl+B D`));
-    console.log(chalk.gray(`[init] Run:     zx perform.mjs <your command>`));
+    console.log(chalk.gray(`[init] Run:     zx src/perform.mjs <your command>`));
 }
 
 // # ============================================================================
@@ -160,7 +167,7 @@ async function doStatus() {
         console.log(chalk.gray(`[status] Last pane lines:\n${lastLines}`));
     } else {
         console.log(chalk.redBright(`[status] tmux session "${TMUX_SESSION}" NOT FOUND on ${REMOTE_HOST}`));
-        console.log(chalk.gray(`[status] Run "zx perform.mjs --init" to create it.`));
+        console.log(chalk.gray(`[status] Run "zx src/perform.mjs --init" to create it.`));
     }
 }
 
@@ -176,7 +183,7 @@ async function doExec(cmd) {
     const exists = await tmuxHasSession();
     if (!exists) {
         console.log(chalk.redBright(`[exec] tmux session "${TMUX_SESSION}" not found on ${REMOTE_HOST}.`));
-        console.log(chalk.redBright(`[exec] Run "zx perform.mjs --init" first.`));
+        console.log(chalk.redBright(`[exec] Run "zx src/perform.mjs --init" first.`));
         process.exit(1);
     }
 
@@ -245,7 +252,7 @@ async function doSync(cmd) {
         await doStatus();
     } else if (isSync) {
         if (!remoteCmd) {
-            console.error(chalk.redBright('Usage: zx perform.mjs --sync <command...>'));
+            console.error(chalk.redBright('Usage: zx src/perform.mjs --sync <command...>'));
             process.exit(1);
         }
         await doSync(remoteCmd);
