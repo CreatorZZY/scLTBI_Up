@@ -98,11 +98,10 @@ async function sraToFastq(sample, currentIndex) {
 
     console.log(chalk.blueBright(`  [${currentIndex + 1}/${SAMPLES.length}] Extracting ${sample.name} (${sample.sra})...`));
 
-    fs.rmSync(sampleFastqDir, { recursive: true, force: true });
     fs.mkdirSync(sampleFastqDir, { recursive: true });
 
     // parallel-fastq-dump with direct gzip output
-    const fastqProc = $({ stdio: ["inherit", "pipe", "pipe"], quiet: true })`micromamba run -n seqds \
+    let fastqProc = $({ stdio: ["inherit", "pipe", "pipe"], quiet: true })`micromamba run -n seqds \
         parallel-fastq-dump \
             --sra-id ${sraFile} \
             -t ${THREADS} \
@@ -181,7 +180,7 @@ for (const sample of SAMPLES) {
 
     console.log(chalk.blueBright(`  [${completedCount}/${SAMPLES.length}] Cell Ranger count for ${sample.name} (${sample.group})...`));
 
-    const crProc = $({ stdio: ["inherit", "pipe", "pipe"], quiet: true })`${CELLRANGER} count \
+    let crProc = $({ stdio: ["inherit", "pipe", "pipe"], quiet: true })`${CELLRANGER} count \
         --id=${sample.name} \
         --transcriptome=${REFERENCE} \
         --fastqs=${fastqDir} \
