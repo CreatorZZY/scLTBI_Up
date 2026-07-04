@@ -170,7 +170,8 @@ let completedCount = 0;
 for (const sample of SAMPLES) {
     completedCount++;
     const resultDir = `${RESULTS_DIR}/${sample.name}`;
-    const markerFile = `${resultDir}/_complete`;
+    const logDir = `${RESULTS_DIR}/.log`;
+    const markerFile = `${resultDir}/.complete`;
     const fastqDir = `${FASTQ_DIR}/${sample.name}`;
 
     if (fs.existsSync(markerFile)) {
@@ -188,11 +189,10 @@ for (const sample of SAMPLES) {
         --create-bam=true \
         --localcores=${THREADS} \
         --localmem=${MEM_GB} \
-        --output-dir=${RESULTS_DIR} \
+        --output-dir=${resultDir} \
         --disable-ui \
         --nopreflight`;
 
-    const logDir = `${RESULTS_DIR}/.log`;
     fs.mkdirSync(logDir, { recursive: true });
     const logStream = fs.createWriteStream(`${logDir}/${sample.name}_cellranger.log`);
     crProc.pipe.stdout(logStream);
